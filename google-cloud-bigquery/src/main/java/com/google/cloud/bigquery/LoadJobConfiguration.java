@@ -22,7 +22,6 @@ import com.google.api.services.bigquery.model.JobConfigurationLoad;
 import com.google.common.base.MoreObjects.ToStringHelper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Ints;
-
 import java.util.List;
 import java.util.Objects;
 
@@ -37,6 +36,7 @@ public final class LoadJobConfiguration extends JobConfiguration implements Load
 
   private final List<String> sourceUris;
   private final TableId destinationTable;
+  private final DestinationEncryptionConfiguration destinationEncryptionConfiguration;
   private final JobInfo.CreateDisposition createDisposition;
   private final JobInfo.WriteDisposition writeDisposition;
   private final FormatOptions formatOptions;
@@ -53,6 +53,7 @@ public final class LoadJobConfiguration extends JobConfiguration implements Load
 
     private List<String> sourceUris;
     private TableId destinationTable;
+    private DestinationEncryptionConfiguration destinationEncryptionConfiguration;
     private JobInfo.CreateDisposition createDisposition;
     private JobInfo.WriteDisposition writeDisposition;
     private FormatOptions formatOptions;
@@ -81,6 +82,8 @@ public final class LoadJobConfiguration extends JobConfiguration implements Load
       this.sourceUris = loadConfiguration.sourceUris;
       this.schemaUpdateOptions = loadConfiguration.schemaUpdateOptions;
       this.autodetect = loadConfiguration.autodetect;
+      this.destinationEncryptionConfiguration =
+          loadConfiguration.destinationEncryptionConfiguration;
     }
 
     private Builder(com.google.api.services.bigquery.model.JobConfiguration configurationPb) {
@@ -145,6 +148,13 @@ public final class LoadJobConfiguration extends JobConfiguration implements Load
     @Override
     public Builder setDestinationTable(TableId destinationTable) {
       this.destinationTable = destinationTable;
+      return this;
+    }
+
+    @Override
+    public LoadConfiguration.Builder setDestinationEncryptionConfiguration(
+        DestinationEncryptionConfiguration destinationEncryptionConfiguration) {
+      this.destinationEncryptionConfiguration = destinationEncryptionConfiguration;
       return this;
     }
 
@@ -238,12 +248,19 @@ public final class LoadJobConfiguration extends JobConfiguration implements Load
     this.ignoreUnknownValues = builder.ignoreUnknownValues;
     this.schemaUpdateOptions = builder.schemaUpdateOptions;
     this.autodetect = builder.autodetect;
+    this.destinationEncryptionConfiguration = builder.destinationEncryptionConfiguration;
   }
 
 
   @Override
   public TableId getDestinationTable() {
     return destinationTable;
+  }
+
+
+  @Override
+  public DestinationEncryptionConfiguration getDestinationEncryptionConfiguration() {
+    return destinationEncryptionConfiguration;
   }
 
 

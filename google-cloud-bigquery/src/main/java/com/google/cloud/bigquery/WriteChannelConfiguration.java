@@ -22,6 +22,7 @@ import com.google.api.services.bigquery.model.JobConfigurationLoad;
 import com.google.cloud.bigquery.JobInfo.CreateDisposition;
 import com.google.cloud.bigquery.JobInfo.WriteDisposition;
 import com.google.cloud.bigquery.JobInfo.SchemaUpdateOption;
+import com.google.cloud.bigquery.LoadConfiguration.Builder;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Ints;
@@ -49,6 +50,7 @@ public final class WriteChannelConfiguration implements LoadConfiguration, Seria
   private final Boolean ignoreUnknownValues;
   private final List<SchemaUpdateOption> schemaUpdateOptions;
   private final Boolean autodetect;
+  private final DestinationEncryptionConfiguration destinationEncryptionConfiguration;
 
   public static final class Builder implements LoadConfiguration.Builder {
 
@@ -62,6 +64,7 @@ public final class WriteChannelConfiguration implements LoadConfiguration, Seria
     private Boolean ignoreUnknownValues;
     private List<SchemaUpdateOption> schemaUpdateOptions;
     private Boolean autodetect;
+    private DestinationEncryptionConfiguration destinationEncryptionConfiguration;
 
     private Builder() {}
 
@@ -76,6 +79,7 @@ public final class WriteChannelConfiguration implements LoadConfiguration, Seria
       this.ignoreUnknownValues = writeChannelConfiguration.ignoreUnknownValues;
       this.schemaUpdateOptions = writeChannelConfiguration.schemaUpdateOptions;
       this.autodetect = writeChannelConfiguration.autodetect;
+      this.destinationEncryptionConfiguration = writeChannelConfiguration.destinationEncryptionConfiguration;
     }
 
     private Builder(com.google.api.services.bigquery.model.JobConfiguration configurationPb) {
@@ -139,6 +143,13 @@ public final class WriteChannelConfiguration implements LoadConfiguration, Seria
     @Override
     public Builder setDestinationTable(TableId destinationTable) {
       this.destinationTable = destinationTable;
+      return this;
+    }
+
+    @Override
+    public LoadConfiguration.Builder setDestinationEncryptionConfiguration(
+        DestinationEncryptionConfiguration destinationEncryptionConfiguration) {
+      this.destinationEncryptionConfiguration = destinationEncryptionConfiguration;
       return this;
     }
 
@@ -221,12 +232,18 @@ public final class WriteChannelConfiguration implements LoadConfiguration, Seria
     this.ignoreUnknownValues = builder.ignoreUnknownValues;
     this.schemaUpdateOptions = builder.schemaUpdateOptions;
     this.autodetect = builder.autodetect;
+    this.destinationEncryptionConfiguration = builder.destinationEncryptionConfiguration;
   }
 
 
   @Override
   public TableId getDestinationTable() {
     return destinationTable;
+  }
+
+  @Override
+  public DestinationEncryptionConfiguration getDestinationEncryptionConfiguration() {
+    return destinationEncryptionConfiguration;
   }
 
 
