@@ -41,6 +41,7 @@ import com.google.cloud.bigquery.CopyJobConfiguration;
 import com.google.cloud.bigquery.Dataset;
 import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.bigquery.DatasetInfo;
+import com.google.cloud.bigquery.EncryptionConfiguration;
 import com.google.cloud.bigquery.ExternalTableDefinition;
 import com.google.cloud.bigquery.ExtractJobConfiguration;
 import com.google.cloud.bigquery.Field;
@@ -214,6 +215,7 @@ public class ITBigQueryTest {
 
   private static final Set<String> PUBLIC_DATASETS = ImmutableSet.of("github_repos", "hacker_news",
       "noaa_gsod", "samples", "usa_names");
+  private static final String KMS_KEY_NAME = "projects/encryption-test-165123/locations/global/keyRings/key1/cryptoKeys/cmek_test1/cryptoKeyVersions/1";
 
   private static BigQuery bigquery;
   private static Storage storage;
@@ -1111,6 +1113,78 @@ public class ITBigQueryTest {
   @Test
   public void testCancelNonExistingJob() {
     assertFalse(bigquery.cancel("test_cancel_non_existing_job"));
+  }
+
+  @Test
+  public void testLoadCmek() throws InterruptedException, IOException, TimeoutException {
+    TableId tableId = TableId.of(DATASET, "test_insert_from_file_table_cmek");
+
+    LoadJobConfiguration configuration = LoadJobConfiguration.newBuilder(
+        tableId, "gs://" + BUCKET + "/" + JSON_LOAD_FILE, FormatOptions.json())
+        .setCreateDisposition(JobInfo.CreateDisposition.CREATE_IF_NEEDED)
+        .setSchema(TABLE_SCHEMA)
+        .setDestinationEncryptionConfiguration(
+            EncryptionConfiguration.newBuilder().setKmsKeyName(KMS_KEY_NAME).build())
+        .build();
+
+    Job job = bigquery.create(JobInfo.of(configuration));
+    job = job.waitFor();
+    assertNull(job.getStatus().getError());
+
+    Table resultTable = bigquery.getTable(tableId);
+    assertNotNull(resultTable.getEncryptionConfiguration());
+    assertEquals(KMS_KEY_NAME, resultTable.getEncryptionConfiguration().getKmsKeyName());
+  }
+
+  @Test
+  public void testQueryDstTableAndCopyCmek() throws InterruptedException, IOException, TimeoutException {
+    TableId queryDstTableId = TableId.of(DATASET, "test_query_dst_table_cmek");
+    TableId copyDstTableId = TableId.of(DATASET, "test_copy_dst_table_cmek");
+
+    QueryJobConfiguration configuration = QueryJobConfiguration.newBuilder("select 42 as A")
+        .setDestinationTable(queryDstTableId)
+        .setDestinationEncryptionConfiguration(
+            EncryptionConfiguration.newBuilder().setKmsKeyName(KMS_KEY_NAME).build())
+        .build();
+
+    Job job = bigquery.create(JobInfo.of(configuration));
+    job = job.waitFor();
+    assertNull(job.getStatus().getError());
+
+    Table resultTable = bigquery.getTable(queryDstTableId);
+    assertNotNull(resultTable.getEncryptionConfiguration());
+    assertEquals(KMS_KEY_NAME, resultTable.getEncryptionConfiguration().getKmsKeyName());
+
+    CopyJobConfiguration copyJobConfiguration =
+        CopyJobConfiguration.newBuilder(copyDstTableId, queryDstTableId)
+            .setDestinationEncryptionConfiguration(
+                EncryptionConfiguration.newBuilder().setKmsKeyName(KMS_KEY_NAME).build())
+            .build();
+
+    Job copyJob = bigquery.create(JobInfo.of(copyJobConfiguration));
+    copyJob = copyJob.waitFor();
+    assertNull(copyJob.getStatus().getError());
+
+    resultTable = bigquery.getTable(copyDstTableId);
+    assertNotNull(resultTable.getEncryptionConfiguration());
+    assertEquals(KMS_KEY_NAME, resultTable.getEncryptionConfiguration().getKmsKeyName());
+  }
+
+  @Test
+  public void testCreateTableCmek() throws InterruptedException, IOException, TimeoutException {
+    String destinationTableName = "test_create_table_cmek";
+    TableId tableId = TableId.of(DATASET, destinationTableName);
+
+    Table createdTable = bigquery.create(
+        TableInfo.newBuilder(tableId, StandardTableDefinition.newBuilder().build())
+        .setEncryptionConfiguration(
+            EncryptionConfiguration.newBuilder().setKmsKeyName(KMS_KEY_NAME).build())
+        .build());
+    assertEquals(KMS_KEY_NAME, createdTable.getEncryptionConfiguration().getKmsKeyName());
+
+    Table resultTable = bigquery.getTable(tableId);
+    assertNotNull(resultTable.getEncryptionConfiguration());
+    assertEquals(KMS_KEY_NAME, resultTable.getEncryptionConfiguration().getKmsKeyName());
   }
 
   @Test
