@@ -40,7 +40,7 @@ public interface LoadConfiguration {
     Builder setDestinationTable(TableId destinationTable);
 
 
-    Builder setDestinationEncryptionConfiguration(DestinationEncryptionConfiguration destinationEncryptionConfiguration);
+    Builder setDestinationEncryptionConfiguration(EncryptionConfiguration encryptionConfiguration);
 
     /**
      * Sets whether the job is allowed to create new tables.
@@ -128,7 +128,7 @@ public interface LoadConfiguration {
    */
   TableId getDestinationTable();
 
-  DestinationEncryptionConfiguration getDestinationEncryptionConfiguration();
+  EncryptionConfiguration getDestinationEncryptionConfiguration();
 
 
   /**

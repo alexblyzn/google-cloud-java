@@ -36,7 +36,7 @@ public final class LoadJobConfiguration extends JobConfiguration implements Load
 
   private final List<String> sourceUris;
   private final TableId destinationTable;
-  private final DestinationEncryptionConfiguration destinationEncryptionConfiguration;
+  private final EncryptionConfiguration destinationEncryptionConfiguration;
   private final JobInfo.CreateDisposition createDisposition;
   private final JobInfo.WriteDisposition writeDisposition;
   private final FormatOptions formatOptions;
@@ -53,7 +53,7 @@ public final class LoadJobConfiguration extends JobConfiguration implements Load
 
     private List<String> sourceUris;
     private TableId destinationTable;
-    private DestinationEncryptionConfiguration destinationEncryptionConfiguration;
+    private EncryptionConfiguration destinationEncryptionConfiguration;
     private JobInfo.CreateDisposition createDisposition;
     private JobInfo.WriteDisposition writeDisposition;
     private FormatOptions formatOptions;
@@ -142,6 +142,10 @@ public final class LoadJobConfiguration extends JobConfiguration implements Load
         this.schemaUpdateOptions = schemaUpdateOptionsBuilder.build();
       }
       this.autodetect = loadConfigurationPb.getAutodetect();
+      if (loadConfigurationPb.getDestinationEncryptionConfiguration() != null) {
+        this.destinationEncryptionConfiguration = new EncryptionConfiguration.Builder(
+            loadConfigurationPb.getDestinationEncryptionConfiguration()).build();
+      }
     }
 
 
@@ -152,9 +156,9 @@ public final class LoadJobConfiguration extends JobConfiguration implements Load
     }
 
     @Override
-    public LoadConfiguration.Builder setDestinationEncryptionConfiguration(
-        DestinationEncryptionConfiguration destinationEncryptionConfiguration) {
-      this.destinationEncryptionConfiguration = destinationEncryptionConfiguration;
+    public Builder setDestinationEncryptionConfiguration(
+        EncryptionConfiguration encryptionConfiguration) {
+      this.destinationEncryptionConfiguration = encryptionConfiguration;
       return this;
     }
 
@@ -259,7 +263,7 @@ public final class LoadJobConfiguration extends JobConfiguration implements Load
 
 
   @Override
-  public DestinationEncryptionConfiguration getDestinationEncryptionConfiguration() {
+  public EncryptionConfiguration getDestinationEncryptionConfiguration() {
     return destinationEncryptionConfiguration;
   }
 
@@ -343,6 +347,7 @@ public final class LoadJobConfiguration extends JobConfiguration implements Load
   ToStringHelper toStringHelper() {
     return super.toStringHelper()
         .add("destinationTable", destinationTable)
+        .add("destinationEncryptionConfiguration", destinationEncryptionConfiguration)
         .add("createDisposition", createDisposition)
         .add("writeDisposition", writeDisposition)
         .add("formatOptions", formatOptions)
@@ -420,6 +425,10 @@ public final class LoadJobConfiguration extends JobConfiguration implements Load
       loadConfigurationPb.setSchemaUpdateOptions(schemaUpdateOptionsBuilder.build());
     }
     loadConfigurationPb.setAutodetect(autodetect);
+    if (destinationEncryptionConfiguration != null) {
+      loadConfigurationPb.setDestinationEncryptionConfiguration(
+          destinationEncryptionConfiguration.toPb());
+    }
     return new com.google.api.services.bigquery.model.JobConfiguration()
         .setLoad(loadConfigurationPb);
   }
